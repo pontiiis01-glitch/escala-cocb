@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escala de Militares - COCB-M</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        /* Estilos Gerais */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }
+        header { background-color: #2c3e50; color: #fff; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 1.8rem; }
+        p { margin-top: 5px; opacity: 0.8; }
+        
+        /* Barra de Busca e Carregamento */
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .search-box { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        #loading { color: #d35400; font-weight: bold; display: none; }
+
+        /* Tabela */
+        .table-container { overflow-x: auto; box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); background-color: #fff; border-radius: 5px; height: 70vh; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 0.9rem; }
+        th { background-color: #34495e; color: #ffffff; position: sticky; top: 0; z-index: 10; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #e2e6ea; }
+        .status-pronto { color: #27ae60; font-weight: bold; }
+        footer { text-align: center; margin-top: 20px; font-size: 0.85rem; color: #777; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Quadro Geral de Militares</h1>
+        <p>Carregando dados em tempo real da planilha oficial</p>
+    </header>
+
+    <div class="controls">
+        <input type="text" id="searchInput" class="search-box" placeholder="Pesquisar por Nome, Posto ou Unidade...">
+        <span id="loading">Carregando dados...</span>
+    </div>
+
+    <div class="table-container">
+        <table id="militaresTable">
+            <thead>
+                <tr id="tableHeader"></tr>
+            </thead>
+            <tbody id="tableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <footer>
+        &copy; 2026 COCB-M - Sistema Integrado
+    </footer>
+
+    <script>
+        // --- CONFIGURAÇÃO ---
+        // COLE O LINK CSV DA ETAPA 1 DENTRO DAS ASPAS ABAIXO:
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdla33q3_rNMm8KTn518RipwwkZvv60sOMk79_tU2twWCAkV-cxHKvEoLJVV7sqw/pub?output=csv"; 
+        
+        // Exemplo de como deve ficar o link:
+        // const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT.../pub?output=csv";
+
+        const tableHeader = document.getElementById("tableHeader");
+        const tableBody = document.getElementById("tableBody");
+        const loadingMsg = document.getElementById("loading");
+        const searchInput = document.getElementById("searchInput");
+        let dadosCompletos = []; // Guarda todos os dados para filtrar depois
+
+        function carregarDados() {
+            loadingMsg.style.display = "block";
+            
+            Papa.parse(sheetUrl, {
+                download: true,
+                header: true, // Usa a primeira linha como cabeçalho
+                skipEmptyLines: true,
+                complete: function(results) {
+                    dadosCompletos = results.data;
+                    gerarTabela(dadosCompletos);
+                    loadingMsg.style.display = "none";
+                },
+                error: function(err) {
+                    alert("Erro ao carregar planilha. Verifique se o link CSV está correto e publicado.");
+                    loadingMsg.innerHTML = "Erro ao carregar.";
+                }
+            });
+        }
+
+        function gerarTabela(dados) {
+            // 1. Gerar Cabeçalhos (Pega as chaves do primeiro item)
+            if (dados.length > 0 && tableHeader.innerHTML === "") {
+                const colunas = Object.keys(dados[0]);
+                colunas.forEach(coluna => {
+                    const th = document.createElement("th");
+                    th.textContent = coluna;
+                    tableHeader.appendChild(th);
+                });
+            }
+
+            // 2. Gerar Linhas
+            tableBody.innerHTML = "";
+            dados.forEach(linha => {
+                const tr = document.createElement("tr");
+                Object.values(linha).forEach(valor => {
+                    const td = document.createElement("td");
+                    td.textContent = valor;
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Filtro de Busca
+        searchInput.addEventListener("keyup", (e) => {
+            const termo = e.target.value.toLowerCase();
+            const dadosFiltrados = dadosCompletos.filter(item => {
+                // Procura o termo em todas as colunas da linha
+                return Object.values(item).some(val => 
+                    String(val).toLowerCase().includes(termo)
+                );
+            });
+            gerarTabela(dadosFiltrados);
+        });
+
+        // Iniciar
+        if (sheetUrl.includes("COLE_AQUI")) {
+            alert("Atenção: Você precisa colar o link CSV no código (linha 68) para funcionar!");
+        } else {
+            carregarDados();
+        }
+    </script>
+</body>
+</html>
