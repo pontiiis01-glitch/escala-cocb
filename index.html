@@ -154,22 +154,25 @@
             });
         }
 
-        // 2. Preenche o Dropdown com os nomes das colunas
+// 2. Preenche o Dropdown (Versão Filtrada: Só Datas)
         function preencherFiltroDatas(dados) {
             if (dados.length === 0) return;
             
-            // Pega todas as colunas da planilha
             const colunas = Object.keys(dados[0]);
             
-            // Limpa o select (mantendo a opção padrão)
+            // Limpa o select e deixa a opção padrão
             columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Mostrar Tudo)</option>';
 
             colunas.forEach(coluna => {
-                // Cria uma opção para cada coluna
-                const option = document.createElement("option");
-                option.value = coluna;
-                option.textContent = coluna;
-                columnFilter.appendChild(option);
+                // --- A MÁGICA ESTÁ AQUI ---
+                // Verifica se o nome da coluna tem uma "/" (barra)
+                // Se tiver barra (ex: 16/01), é data. Se não tiver (ex: NOME), ele ignora.
+                if (coluna.includes("/")) { 
+                    const option = document.createElement("option");
+                    option.value = coluna;
+                    option.textContent = coluna;
+                    columnFilter.appendChild(option);
+                }
             });
         }
 
