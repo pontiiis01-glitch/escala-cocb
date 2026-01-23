@@ -34,9 +34,8 @@
         /* --- CONTROLES E BUSCA --- */
         .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         
-        /* Estilo da Caixa de Texto */
         .search-box {
-            flex: 2; /* Ocupa mais espaço */
+            flex: 2;
             padding: 12px 15px;
             border: 2px solid #dfe6e9;
             border-radius: 6px;
@@ -44,9 +43,8 @@
             transition: border-color 0.3s;
         }
 
-        /* Estilo do Dropdown (Filtro de Dia) */
         .filter-select {
-            flex: 1; /* Ocupa menos espaço que a busca */
+            flex: 1;
             padding: 12px 15px;
             border: 2px solid #dfe6e9;
             border-radius: 6px;
@@ -93,7 +91,6 @@
 
     <header>
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg/1200px-Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg.png" alt="Brasão CBMMA" class="header-logo">
-        
         <div class="header-text">
             <h1>COCB-M 🛡️</h1>
             <p>Quadro de Militares e Escalas Integrado</p>
@@ -105,7 +102,7 @@
         
         <select id="columnFilter" class="filter-select">
             <option value="">📅 Filtrar por Dia de Serviço...</option>
-            </select>
+        </select>
 
         <span id="loading">⏳ Carregando dados...</span>
     </div>
@@ -124,10 +121,9 @@
     </footer>
 
     <script>
-        // --- CONFIGURAÇÃO ---
+        // SEU LINK JÁ ESTÁ AQUI:
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdla33q3_rNMm8KTn518RipwwkZvv60sOMk79_tU2twWCAkV-cxHKvEoLJVV7sqw/pub?output=csv";
 
-        // Elementos da Tela
         const tableHeader = document.getElementById("tableHeader");
         const tableBody = document.getElementById("tableBody");
         const loadingMsg = document.getElementById("loading");
@@ -136,15 +132,14 @@
         
         let dadosCompletos = [];
 
-        // 1. Carrega os dados
         function carregarDados() {
             loadingMsg.style.display = "block";
             Papa.parse(sheetUrl, {
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
                     dadosCompletos = results.data;
-                    preencherFiltroDatas(dadosCompletos); // Preenche o menu
-                    gerarTabela(dadosCompletos);          // Gera a tabela inicial
+                    preencherFiltroDatas(dadosCompletos);
+                    gerarTabela(dadosCompletos);
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) {
@@ -154,19 +149,17 @@
             });
         }
 
-// 2. Preenche o Dropdown (Versão Filtrada: Só Datas)
+        // --- FUNÇÃO CORRIGIDA (SÓ DATAS COM "/") ---
         function preencherFiltroDatas(dados) {
             if (dados.length === 0) return;
             
             const colunas = Object.keys(dados[0]);
             
-            // Limpa o select e deixa a opção padrão
+            // Limpa o select
             columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Mostrar Tudo)</option>';
 
             colunas.forEach(coluna => {
-                // --- A MÁGICA ESTÁ AQUI ---
-                // Verifica se o nome da coluna tem uma "/" (barra)
-                // Se tiver barra (ex: 16/01), é data. Se não tiver (ex: NOME), ele ignora.
+                // Se a coluna tiver "/" (ex: 16/01), adiciona no filtro. Se não, ignora.
                 if (coluna.includes("/")) { 
                     const option = document.createElement("option");
                     option.value = coluna;
@@ -176,41 +169,35 @@
             });
         }
 
-        // 3. Função Inteligente de Filtro (Texto + Data)
         function aplicarFiltros() {
             const termoTexto = searchInput.value.toLowerCase();
             const colunaSelecionada = columnFilter.value;
 
             const dadosFiltrados = dadosCompletos.filter(item => {
-                // Filtro 1: Verifica se o texto digitado existe na linha
+                // Filtro de Texto
                 const matchTexto = Object.values(item).some(val => 
                     String(val).toLowerCase().includes(termoTexto)
                 );
 
-                // Filtro 2: Se uma data foi selecionada, verifica se ela NÃO está vazia
+                // Filtro de Coluna (Dia)
                 let matchColuna = true;
                 if (colunaSelecionada !== "") {
                     const valorNaCélula = item[colunaSelecionada];
-                    // Só mostra se tiver algo escrito (diferente de vazio)
                     matchColuna = valorNaCélula && valorNaCélula.trim() !== "";
                 }
 
-                // O item tem que passar nos DOIS testes
                 return matchTexto && matchColuna;
             });
 
             gerarTabela(dadosFiltrados);
         }
 
-        // 4. Renderiza a Tabela na tela
         function gerarTabela(dados) {
-            // Se não tiver dados (tudo filtrado), avisa
             if (dados.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="100%" style="text-align:center; padding: 20px;">Nenhum militar encontrado com esses filtros.</td></tr>';
                 return;
             }
 
-            // Gerar Cabeçalho (apenas na primeira vez ou se mudar)
             if (tableHeader.innerHTML === "") {
                 const colunas = Object.keys(dados[0]);
                 colunas.forEach(coluna => {
@@ -220,7 +207,6 @@
                 });
             }
 
-            // Gerar Linhas
             tableBody.innerHTML = "";
             dados.forEach(linha => {
                 const tr = document.createElement("tr");
@@ -233,11 +219,9 @@
             });
         }
 
-        // Ouve quando você digita ou muda o select
         searchInput.addEventListener("keyup", aplicarFiltros);
         columnFilter.addEventListener("change", aplicarFiltros);
 
-        // Inicia tudo
         carregarDados();
     </script>
 </body>
