@@ -15,138 +15,94 @@
             color: #333; 
         }
 
-        /* --- CABEÇALHO (Agora Centralizado) --- */
+        /* --- CABEÇALHO DE TRÊS COLUNAS --- */
         header {
             background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
             color: #fff;
-            padding: 20px;
+            padding: 15px 30px; /* Mais espaço nas laterais */
             border-radius: 8px;
             margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(183, 28, 28, 0.3);
             border-bottom: 4px solid #7f0000;
             
-            /* --- COMANDOS DE CENTRALIZAÇÃO --- */
-            display: flex;             /* Transforma em flexbox */
-            align-items: center;       /* Centraliza verticalmente */
-            justify-content: center;   /* Centraliza horizontalmente (NOVO) */
-            gap: 20px;                 /* Espaço entre logo e texto */
-            text-align: left;          /* Mantém o texto alinhado à esquerda do bloco dele */
+            /* Lógica para Esquerda - Centro - Direita */
+            display: flex;             
+            align-items: center;       
+            justify-content: space-between; /* Espalha os itens */
+            text-align: center;          
         }
 
+        /* Configuração dos Brasões */
         .header-logo {
-            width: 85px;
+            width: 85px; /* Tamanho do brasão */
             height: auto;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+            flex-shrink: 0; /* Impede que o brasão encolha em telas pequenas */
+        }
+
+        /* Texto Centralizado */
+        .header-text {
+            flex-grow: 1; /* Ocupa o espaço disponível no meio */
+            padding: 0 20px;
         }
 
         .header-text h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
-        .header-text p { margin-top: 5px; opacity: 0.9; font-size: 0.95rem; font-weight: 500; }
+        .header-text p { margin-top: 5px; opacity: 0.9; font-size: 1rem; font-weight: 500; }
 
-        /* --- MODIFICAÇÃO MOBILE (Para telas pequenas) --- */
-        @media (max-width: 600px) {
-            header {
-                flex-direction: column; /* Um embaixo do outro no celular */
-                text-align: center;
+        /* Mobile: Tudo em coluna quando a tela for pequena */
+        @media (max-width: 700px) {
+            header { 
+                flex-direction: column; 
+                gap: 15px;
             }
         }
 
-        /* --- RESTANTE DOS ESTILOS (IGUAL) --- */
+        /* --- RESTANTE (IGUAL) --- */
         .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: center; }
-        
-        .search-box {
-            flex: 2;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: all 0.3s;
-            min-width: 250px;
-        }
-
-        .filter-select {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 1rem;
-            background-color: white;
-            cursor: pointer;
-            min-width: 200px;
-        }
-
-        .search-box:focus, .filter-select:focus { 
-            border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3);
-        }
-
+        .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 250px; }
+        .filter-select { flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; background-color: white; cursor: pointer; min-width: 200px; }
+        .search-box:focus, .filter-select:focus { border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3); }
         #loading { color: #c0392b; font-weight: 700; display: none; font-size: 0.9rem; }
-
-        .table-container {
-            overflow-x: auto;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
-            border-radius: 8px;
-            height: 65vh;
-            overflow-y: auto;
-            border: 1px solid #ffcdd2;
-        }
+        .table-container { overflow-x: auto; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); background-color: #fff; border-radius: 8px; height: 65vh; overflow-y: auto; border: 1px solid #ffcdd2; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ffebee; font-size: 0.9rem; }
-        
-        th {
-            background-color: #8b0000;
-            color: #ffffff;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            border-right: 1px solid #a50000;
-        }
-        
+        th { background-color: #8b0000; color: #ffffff; position: sticky; top: 0; z-index: 10; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; border-right: 1px solid #a50000; }
         tr:nth-child(even) { background-color: #fffafa; }
         tr:hover { background-color: #ffebee; transition: background-color 0.2s; }
-        
         footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #b71c1c; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <header>
-        <img src="./brasao.png" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg'" alt="Brasão CBMMA" class="header-logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg/240px-Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg.png" alt="Brasão CBMMA" class="header-logo">
         
         <div class="header-text">
-            <h1>COCB-M</h1>
-            <p>Controle de Serviços em Grandes Eventos</p>
+            <h1>COMANDO OPERACIONAL METROPOLITANO</h1>
+            <p>Controle de serviços em Grandes Eventos</p>
         </div>
+
+        <img src="./brasao_unidade.png" onerror="this.style.opacity='0'" alt="Brasão Unidade" class="header-logo">
     </header>
 
     <div class="controls">
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar Militar, Posto ou Unidade...">
-        
         <select id="columnFilter" class="filter-select">
             <option value="">📅 Filtrar por Dia de Serviço...</option>
         </select>
-
         <span id="loading">🚒 Carregando dados...</span>
     </div>
 
     <div class="table-container">
         <table id="militaresTable">
-            <thead>
-                <tr id="tableHeader"></tr>
-            </thead>
+            <thead><tr id="tableHeader"></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
 
-    <footer>
-        &copy; 2026 CBMMA - Vidas Alheias e Riquezas Salvar
-    </footer>
+    <footer>&copy; 2026 CBMMA - Criado por Igor Moreira Pontes</footer>
 
     <script>
-        // CONFIGURAÇÃO DO LINK CSV
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdla33q3_rNMm8KTn518RipwwkZvv60sOMk79_tU2twWCAkV-cxHKvEoLJVV7sqw/pub?output=csv";
 
         const tableHeader = document.getElementById("tableHeader");
@@ -154,7 +110,6 @@
         const loadingMsg = document.getElementById("loading");
         const searchInput = document.getElementById("searchInput");
         const columnFilter = document.getElementById("columnFilter");
-        
         let dadosCompletos = [];
 
         function carregarDados() {
@@ -167,10 +122,7 @@
                     gerarTabela(dadosCompletos);
                     loadingMsg.style.display = "none";
                 },
-                error: function(err) {
-                    console.error(err);
-                    loadingMsg.innerHTML = "❌ Erro ao carregar.";
-                }
+                error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
             });
         }
 
@@ -191,11 +143,8 @@
         function aplicarFiltros() {
             const termoTexto = searchInput.value.toLowerCase();
             const colunaSelecionada = columnFilter.value;
-
             const dadosFiltrados = dadosCompletos.filter(item => {
-                const matchTexto = Object.values(item).some(val => 
-                    String(val).toLowerCase().includes(termoTexto)
-                );
+                const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
                 let matchColuna = true;
                 if (colunaSelecionada !== "") {
                     const valorNaCélula = item[colunaSelecionada];
@@ -233,7 +182,6 @@
 
         searchInput.addEventListener("keyup", aplicarFiltros);
         columnFilter.addEventListener("change", aplicarFiltros);
-
         carregarDados();
     </script>
 </body>
