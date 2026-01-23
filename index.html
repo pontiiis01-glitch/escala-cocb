@@ -18,7 +18,7 @@
             color: #333; 
         }
 
-        /* --- CABEÇALHO --- */
+        /* --- CABEÇALHO (VOLTAMOS PARA O DE 3 COLUNAS) --- */
         header {
             background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
             color: #fff;
@@ -29,8 +29,7 @@
             border-bottom: 4px solid #7f0000;
             display: flex;             
             align-items: center;       
-            justify-content: center;
-            gap: 20px;
+            justify-content: space-between; /* ISSO COLOCA UM EM CADA PONTA */
             text-align: center;          
         }
 
@@ -41,6 +40,12 @@
             flex-shrink: 0;
         }
 
+        /* Texto Centralizado */
+        .header-text {
+            flex-grow: 1;
+            padding: 0 20px;
+        }
+
         .header-text h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
         .header-text p { margin-top: 5px; opacity: 0.9; font-size: 1.5rem; font-weight: 600; }
 
@@ -48,11 +53,11 @@
             header { flex-direction: column; gap: 15px; }
         }
 
-        /* --- CONTROLES --- */
+        /* --- CONTROLES (SEM BRASÃO) --- */
         .controls { 
             margin-bottom: 20px; 
             display: flex; 
-            gap: 10px; 
+            gap: 15px; 
             align-items: center; 
             flex-wrap: wrap; 
             justify-content: center; 
@@ -69,7 +74,7 @@
             border-radius: 6px; 
             font-size: 1rem; 
             transition: all 0.3s; 
-            min-width: 200px; 
+            min-width: 250px; 
         }
 
         .filter-select { 
@@ -80,16 +85,9 @@
             font-size: 1rem; 
             background-color: white; 
             cursor: pointer; 
-            min-width: 180px; 
+            min-width: 200px; 
             font-weight: 600;
             color: #b71c1c;
-        }
-
-        .control-logo {
-            height: 45px; 
-            width: auto;
-            margin-right: 10px;
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
         }
 
         .search-box:focus, .filter-select:focus { border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3); }
@@ -108,17 +106,17 @@
 <body>
 
     <header>
-        <img src="./brasao_cbmma.png" alt="Brasão CBMMA" class="header-logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg/240px-Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg.png" alt="Brasão CBMMA" class="header-logo">
         
         <div class="header-text">
             <h1>COMANDO OPERACIONAL METROPOLITANO</h1>
             <p>Controle de serviços em Grandes Eventos</p>
         </div>
+
+        <img src="./brasao_unidade.png" onerror="this.style.opacity='0'" alt="Brasão Unidade" class="header-logo">
     </header>
 
     <div class="controls">
-        <img src="./brasao_unidade.png" onerror="this.style.display='none'" alt="Brasão Unidade" class="control-logo">
-
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar Militar, Posto ou Unidade...">
         <select id="columnFilter" class="filter-select">
             <option value="">📅 Filtrar por Dia de Serviço...</option>
@@ -159,17 +157,13 @@
             });
         }
 
-        // --- FUNÇÃO CORRIGIDA PARA REMOVER 'POSTO/GRADUAÇÃO' ---
+        // --- FILTRO: SÓ DATAS (Ignora POSTO/GRADUAÇÃO) ---
         function preencherFiltroDatas(dados) {
             if (dados.length === 0) return;
             const colunas = Object.keys(dados[0]);
             columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Geral)</option>';
             
             colunas.forEach(coluna => {
-                // NOVA REGRA:
-                // 1. Tem que ter barra "/"
-                // 2. E TEM QUE TER NÚMERO (0-9) no nome
-                // Isso garante que datas (16/01) entrem, mas nomes (POSTO/GRAD) não.
                 if (coluna.includes("/") && /[0-9]/.test(coluna)) { 
                     const option = document.createElement("option");
                     option.value = coluna;
