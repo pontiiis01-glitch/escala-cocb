@@ -11,27 +11,30 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
             padding: 20px; 
-            background-color: #fff5f5; /* Fundo levemente avermelhado (bem suave) */
+            background-color: #fff5f5; 
             color: #333; 
         }
 
-        /* --- CABEÇALHO VERMELHO --- */
+        /* --- CABEÇALHO (Agora Centralizado) --- */
         header {
-            /* Degradê Vermelho Bombeiro */
             background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
             color: #fff;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(183, 28, 28, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            border-bottom: 4px solid #7f0000; /* Linha mais escura na base */
+            border-bottom: 4px solid #7f0000;
+            
+            /* --- COMANDOS DE CENTRALIZAÇÃO --- */
+            display: flex;             /* Transforma em flexbox */
+            align-items: center;       /* Centraliza verticalmente */
+            justify-content: center;   /* Centraliza horizontalmente (NOVO) */
+            gap: 20px;                 /* Espaço entre logo e texto */
+            text-align: left;          /* Mantém o texto alinhado à esquerda do bloco dele */
         }
 
         .header-logo {
-            width: 90px; /* Aumentei um pouco o brasão */
+            width: 85px;
             height: auto;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
         }
@@ -39,8 +42,16 @@
         .header-text h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
         .header-text p { margin-top: 5px; opacity: 0.9; font-size: 0.95rem; font-weight: 500; }
 
-        /* --- CONTROLES E BUSCA --- */
-        .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        /* --- MODIFICAÇÃO MOBILE (Para telas pequenas) --- */
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column; /* Um embaixo do outro no celular */
+                text-align: center;
+            }
+        }
+
+        /* --- RESTANTE DOS ESTILOS (IGUAL) --- */
+        .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: center; }
         
         .search-box {
             flex: 2;
@@ -49,6 +60,7 @@
             border-radius: 6px;
             font-size: 1rem;
             transition: all 0.3s;
+            min-width: 250px;
         }
 
         .filter-select {
@@ -62,16 +74,12 @@
             min-width: 200px;
         }
 
-        /* Cor da borda quando clica (Vermelho) */
         .search-box:focus, .filter-select:focus { 
-            border-color: #d32f2f; 
-            outline: none; 
-            box-shadow: 0 0 5px rgba(211, 47, 47, 0.3);
+            border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3);
         }
 
         #loading { color: #c0392b; font-weight: 700; display: none; font-size: 0.9rem; }
 
-        /* --- TABELA --- */
         .table-container {
             overflow-x: auto;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -79,14 +87,13 @@
             border-radius: 8px;
             height: 65vh;
             overflow-y: auto;
-            border: 1px solid #ffcdd2; /* Borda suave vermelha */
+            border: 1px solid #ffcdd2;
         }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ffebee; font-size: 0.9rem; }
         
-        /* Cabeçalho da Tabela (Vermelho Escuro) */
         th {
-            background-color: #8b0000; /* Vermelho Sangue/Grená */
+            background-color: #8b0000;
             color: #ffffff;
             position: sticky;
             top: 0;
@@ -98,9 +105,8 @@
             border-right: 1px solid #a50000;
         }
         
-        /* Linhas Zebradas (Tom de vermelho muito suave) */
         tr:nth-child(even) { background-color: #fffafa; }
-        tr:hover { background-color: #ffxhxh; background-color: #ffebee; transition: background-color 0.2s; } /* Highlight vermelho claro */
+        tr:hover { background-color: #ffebee; transition: background-color 0.2s; }
         
         footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #b71c1c; font-weight: 600; }
     </style>
@@ -108,7 +114,8 @@
 <body>
 
     <header>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg/1200px-Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg.png" alt="Brasão CBMMA" class="header-logo">
+        <img src="./brasao.png" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg'" alt="Brasão CBMMA" class="header-logo">
+        
         <div class="header-text">
             <h1>COCB-M</h1>
             <p>Escala de Serviço Operacional</p>
@@ -139,7 +146,7 @@
     </footer>
 
     <script>
-        // SEU LINK DA PLANILHA:
+        // CONFIGURAÇÃO DO LINK CSV
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdla33q3_rNMm8KTn518RipwwkZvv60sOMk79_tU2twWCAkV-cxHKvEoLJVV7sqw/pub?output=csv";
 
         const tableHeader = document.getElementById("tableHeader");
@@ -167,13 +174,10 @@
             });
         }
 
-        // --- FILTRO DE DATAS (SÓ COLUNAS COM /) ---
         function preencherFiltroDatas(dados) {
             if (dados.length === 0) return;
-            
             const colunas = Object.keys(dados[0]);
             columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Geral)</option>';
-
             colunas.forEach(coluna => {
                 if (coluna.includes("/")) { 
                     const option = document.createElement("option");
@@ -192,16 +196,13 @@
                 const matchTexto = Object.values(item).some(val => 
                     String(val).toLowerCase().includes(termoTexto)
                 );
-
                 let matchColuna = true;
                 if (colunaSelecionada !== "") {
                     const valorNaCélula = item[colunaSelecionada];
                     matchColuna = valorNaCélula && valorNaCélula.trim() !== "";
                 }
-
                 return matchTexto && matchColuna;
             });
-
             gerarTabela(dadosFiltrados);
         }
 
@@ -210,7 +211,6 @@
                 tableBody.innerHTML = '<tr><td colspan="100%" style="text-align:center; padding: 20px; color: #b71c1c;">Nenhum militar encontrado.</td></tr>';
                 return;
             }
-
             if (tableHeader.innerHTML === "") {
                 const colunas = Object.keys(dados[0]);
                 colunas.forEach(coluna => {
@@ -219,7 +219,6 @@
                     tableHeader.appendChild(th);
                 });
             }
-
             tableBody.innerHTML = "";
             dados.forEach(linha => {
                 const tr = document.createElement("tr");
