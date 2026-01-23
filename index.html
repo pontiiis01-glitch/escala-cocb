@@ -18,7 +18,7 @@
             color: #333; 
         }
 
-        /* --- CABEÇALHO (VOLTAMOS PARA O DE 3 COLUNAS) --- */
+        /* --- CABEÇALHO --- */
         header {
             background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
             color: #fff;
@@ -29,7 +29,7 @@
             border-bottom: 4px solid #7f0000;
             display: flex;             
             align-items: center;       
-            justify-content: space-between; /* ISSO COLOCA UM EM CADA PONTA */
+            justify-content: space-between;
             text-align: center;          
         }
 
@@ -40,7 +40,6 @@
             flex-shrink: 0;
         }
 
-        /* Texto Centralizado */
         .header-text {
             flex-grow: 1;
             padding: 0 20px;
@@ -53,7 +52,7 @@
             header { flex-direction: column; gap: 15px; }
         }
 
-        /* --- CONTROLES (SEM BRASÃO) --- */
+        /* --- CONTROLES --- */
         .controls { 
             margin-bottom: 20px; 
             display: flex; 
@@ -150,19 +149,17 @@
                 complete: function(results) {
                     dadosCompletos = results.data;
                     preencherFiltroDatas(dadosCompletos);
-                    gerarTabela(dadosCompletos);
+                    gerarTabela(dadosCompletos, ""); // Inicia sem filtro de coluna
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
             });
         }
 
-        // --- FILTRO: SÓ DATAS (Ignora POSTO/GRADUAÇÃO) ---
         function preencherFiltroDatas(dados) {
             if (dados.length === 0) return;
             const colunas = Object.keys(dados[0]);
-            columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Geral)</option>';
-            
+            columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Visão Geral)</option>';
             colunas.forEach(coluna => {
                 if (coluna.includes("/") && /[0-9]/.test(coluna)) { 
                     const option = document.createElement("option");
@@ -175,9 +172,13 @@
 
         function aplicarFiltros() {
             const termoTexto = searchInput.value.toLowerCase();
-            const colunaSelecionada = columnFilter.value;
+            const colunaSelecionada = columnFilter.value; // Qual dia foi selecionado?
+
             const dadosFiltrados = dadosCompletos.filter(item => {
+                // 1. Filtro de Texto (Nome, Posto, etc)
                 const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
+                
+                // 2. Filtro de Coluna (Se o dia selecionado tem serviço)
                 let matchColuna = true;
                 if (colunaSelecionada !== "") {
                     const valorNaCélula = item[colunaSelecionada];
@@ -185,28 +186,70 @@
                 }
                 return matchTexto && matchColuna;
             });
-            gerarTabela(dadosFiltrados);
+
+            // AQUI ESTÁ A MUDANÇA: Passamos qual coluna (dia) está selecionada
+            gerarTabela(dadosFiltrados, colunaSelecionada);
         }
 
-        function gerarTabela(dados) {
+        // --- FUNÇÃO INTELIGENTE DE GERAR TABELA ---
+        function gerarTabela(dados, diaSelecionado) {
+            tableHeader.innerHTML = "";
+            tableBody.innerHTML = "";
+
             if (dados.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="100%" style="text-align:center; padding: 20px; color: #b71c1c;">Nenhum militar encontrado.</td></tr>';
                 return;
             }
-            if (tableHeader.innerHTML === "") {
-                const colunas = Object.keys(dados[0]);
-                colunas.forEach(coluna => {
-                    const th = document.createElement("th");
-                    th.textContent = coluna;
-                    tableHeader.appendChild(th);
-                });
-            }
-            tableBody.innerHTML = "";
+
+            // 1. DEFINIR QUAIS COLUNAS VAMOS MOSTRAR
+            const todasColunas = Object.keys(dados[0]);
+            const colunasParaMostrar = [];
+
+            todasColunas.forEach(col => {
+                const ehData = col.includes("/") && /[0-9]/.test(col);
+                const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
+
+                // REGRA 1: Se NÃO tiver filtro de dia, mostra tudo (exceto se quiser esconder algo padrão)
+                if (diaSelecionado === "") {
+                    colunasParaMostrar.push(col);
+                    return;
+                }
+
+                // REGRA 2: Se TIVER filtro de dia ativo:
+                
+                // Se for o dia selecionado -> MOSTRA
+                if (col === diaSelecionado) {
+                    colunasParaMostrar.push(col);
+                    return;
+                }
+
+                // Se for outro dia (data) -> ESCONDE
+                if (ehData && col !== diaSelecionado) {
+                    return; 
+                }
+
+                // Se for Unidade Secundária ou Terciária -> ESCONDE (conforme pedido)
+                if (ehUnidadeExtra) {
+                    return;
+                }
+
+                // Se for informação básica (Nome, Posto, Qtd Serviço, etc) -> MOSTRA
+                colunasParaMostrar.push(col);
+            });
+
+            // 2. DESENHAR O CABEÇALHO (Só as colunas permitidas)
+            colunasParaMostrar.forEach(coluna => {
+                const th = document.createElement("th");
+                th.textContent = coluna;
+                tableHeader.appendChild(th);
+            });
+
+            // 3. DESENHAR AS LINHAS
             dados.forEach(linha => {
                 const tr = document.createElement("tr");
-                Object.values(linha).forEach(valor => {
+                colunasParaMostrar.forEach(coluna => {
                     const td = document.createElement("td");
-                    td.textContent = valor;
+                    td.textContent = linha[coluna];
                     tr.appendChild(td);
                 });
                 tableBody.appendChild(tr);
