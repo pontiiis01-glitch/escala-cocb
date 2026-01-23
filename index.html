@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="icon" type="image/png" href="./brasao_unidade.png">
+    
     <title>Escala CBMMA - COCB-M</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -15,54 +18,85 @@
             color: #333; 
         }
 
-        /* --- CABEÇALHO DE TRÊS COLUNAS --- */
+        /* --- CABEÇALHO --- */
         header {
             background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
             color: #fff;
-            padding: 15px 30px; /* Mais espaço nas laterais */
+            padding: 15px 30px;
             border-radius: 8px;
             margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(183, 28, 28, 0.3);
             border-bottom: 4px solid #7f0000;
-            
-            /* Lógica para Esquerda - Centro - Direita */
             display: flex;             
             align-items: center;       
-            justify-content: space-between; /* Espalha os itens */
+            justify-content: center;
+            gap: 20px;
             text-align: center;          
         }
 
-        /* Configuração dos Brasões */
         .header-logo {
-            width: 85px; /* Tamanho do brasão */
+            width: 85px; 
             height: auto;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-            flex-shrink: 0; /* Impede que o brasão encolha em telas pequenas */
-        }
-
-        /* Texto Centralizado */
-        .header-text {
-            flex-grow: 1; /* Ocupa o espaço disponível no meio */
-            padding: 0 20px;
+            flex-shrink: 0;
         }
 
         .header-text h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
         .header-text p { margin-top: 5px; opacity: 0.9; font-size: 1.5rem; font-weight: 600; }
 
-        /* Mobile: Tudo em coluna quando a tela for pequena */
         @media (max-width: 700px) {
-            header { 
-                flex-direction: column; 
-                gap: 15px;
-            }
+            header { flex-direction: column; gap: 15px; }
         }
 
-        /* --- RESTANTE (IGUAL) --- */
-        .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: center; }
-        .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 250px; }
-        .filter-select { flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; background-color: white; cursor: pointer; min-width: 200px; }
+        /* --- CONTROLES (COM BRASÃO PEQUENO) --- */
+        .controls { 
+            margin-bottom: 20px; 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .search-box { 
+            flex: 2; 
+            padding: 12px 15px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 6px; 
+            font-size: 1rem; 
+            transition: all 0.3s; 
+            min-width: 200px; 
+        }
+
+        .filter-select { 
+            flex: 1; 
+            padding: 12px 15px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 6px; 
+            font-size: 1rem; 
+            background-color: white; 
+            cursor: pointer; 
+            min-width: 180px; 
+            font-weight: 600;
+            color: #b71c1c;
+        }
+
+        /* ESTILO DO BRASÃO PEQUENO NA BARRA */
+        .control-logo {
+            height: 45px; /* Altura ajustada pra combinar com a caixa de texto */
+            width: auto;
+            margin-right: 10px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+        }
+
         .search-box:focus, .filter-select:focus { border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3); }
         #loading { color: #c0392b; font-weight: 700; display: none; font-size: 0.9rem; }
+
+        /* --- TABELA --- */
         .table-container { overflow-x: auto; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); background-color: #fff; border-radius: 8px; height: 65vh; overflow-y: auto; border: 1px solid #ffcdd2; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ffebee; font-size: 0.9rem; }
@@ -75,17 +109,17 @@
 <body>
 
     <header>
-        <img src="./brasao.png" alt="Brasão CBMMA" class="header-logo">
+        <img src="./brasao_cbmma.png" alt="Brasão CBMMA" class="header-logo">
         
         <div class="header-text">
             <h1>COMANDO OPERACIONAL METROPOLITANO</h1>
             <p>Controle de serviços em Grandes Eventos</p>
         </div>
-
-        <img src="./brasao_unidade.png" onerror="this.style.opacity='0'" alt="Brasão Unidade" class="header-logo">
     </header>
 
     <div class="controls">
+        <img src="./brasao_unidade.png" onerror="this.style.display='none'" alt="Brasão Unidade" class="control-logo">
+
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar Militar, Posto ou Unidade...">
         <select id="columnFilter" class="filter-select">
             <option value="">📅 Filtrar por Dia de Serviço...</option>
@@ -131,7 +165,7 @@
             const colunas = Object.keys(dados[0]);
             columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Geral)</option>';
             colunas.forEach(coluna => {
-                if (coluna.includes("/")) { 
+                if (coluna.includes("/") && !coluna.toUpperCase().includes("POSTO")) { 
                     const option = document.createElement("option");
                     option.value = coluna;
                     option.textContent = coluna;
