@@ -149,7 +149,7 @@
                 complete: function(results) {
                     dadosCompletos = results.data;
                     preencherFiltroDatas(dadosCompletos);
-                    gerarTabela(dadosCompletos, ""); // Inicia sem filtro de coluna
+                    gerarTabela(dadosCompletos, "", ""); // Inicia sem filtros
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
@@ -172,13 +172,11 @@
 
         function aplicarFiltros() {
             const termoTexto = searchInput.value.toLowerCase();
-            const colunaSelecionada = columnFilter.value; // Qual dia foi selecionado?
+            const colunaSelecionada = columnFilter.value;
 
             const dadosFiltrados = dadosCompletos.filter(item => {
-                // 1. Filtro de Texto (Nome, Posto, etc)
                 const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
                 
-                // 2. Filtro de Coluna (Se o dia selecionado tem serviço)
                 let matchColuna = true;
                 if (colunaSelecionada !== "") {
                     const valorNaCélula = item[colunaSelecionada];
@@ -187,12 +185,12 @@
                 return matchTexto && matchColuna;
             });
 
-            // AQUI ESTÁ A MUDANÇA: Passamos qual coluna (dia) está selecionada
-            gerarTabela(dadosFiltrados, colunaSelecionada);
+            // Passamos os dados filtrados e TAMBÉM o termo de busca para a função gerar tabela
+            gerarTabela(dadosFiltrados, colunaSelecionada, termoTexto);
         }
 
-        // --- FUNÇÃO INTELIGENTE DE GERAR TABELA ---
-        function gerarTabela(dados, diaSelecionado) {
+        // --- FUNÇÃO DE TABELA (AGORA COM LÓGICA DE BUSCA INTELIGENTE) ---
+        function gerarTabela(dados, diaSelecionado, termoBusca) {
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
 
@@ -201,7 +199,6 @@
                 return;
             }
 
-            // 1. DEFINIR QUAIS COLUNAS VAMOS MOSTRAR
             const todasColunas = Object.keys(dados[0]);
             const colunasParaMostrar = [];
 
@@ -209,42 +206,48 @@
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
 
-                // REGRA 1: Se NÃO tiver filtro de dia, mostra tudo (exceto se quiser esconder algo padrão)
-                if (diaSelecionado === "") {
-                    colunasParaMostrar.push(col);
+                // CASO 1: SELECIONOU UM DIA ESPECÍFICO NO DROPDOWN
+                // Prioridade máxima: mostra só esse dia.
+                if (diaSelecionado !== "") {
+                    if (col === diaSelecionado) {
+                        colunasParaMostrar.push(col);
+                    } else if (!ehData && !ehUnidadeExtra) {
+                        // Mostra Info básica (Nome, Posto...), esconde datas extras e unidades extras
+                        colunasParaMostrar.push(col);
+                    }
                     return;
                 }
 
-                // REGRA 2: Se TIVER filtro de dia ativo:
-                
-                // Se for o dia selecionado -> MOSTRA
-                if (col === diaSelecionado) {
-                    colunasParaMostrar.push(col);
+                // CASO 2: ESTÁ PESQUISANDO POR NOME (mas não selecionou data)
+                if (termoBusca !== "" && termoBusca.length > 0) {
+                    if (!ehData) {
+                        // Se não for data, mostra (Nome, Posto...), menos as unidades extras
+                        if (!ehUnidadeExtra) colunasParaMostrar.push(col);
+                    } else {
+                        // SE FOR DATA: Verifica se o militar filtrado tem serviço nesse dia
+                        // A função .some() verifica se ALGUÉM da lista filtrada tem valor nessa coluna
+                        const temServicoNesseDia = dados.some(militar => militar[col] && militar[col].trim() !== "");
+                        
+                        if (temServicoNesseDia) {
+                            colunasParaMostrar.push(col);
+                        }
+                    }
                     return;
                 }
 
-                // Se for outro dia (data) -> ESCONDE
-                if (ehData && col !== diaSelecionado) {
-                    return; 
-                }
-
-                // Se for Unidade Secundária ou Terciária -> ESCONDE (conforme pedido)
-                if (ehUnidadeExtra) {
-                    return;
-                }
-
-                // Se for informação básica (Nome, Posto, Qtd Serviço, etc) -> MOSTRA
+                // CASO 3: SEM FILTRO NENHUM (Visão Geral)
+                // Mostra tudo
                 colunasParaMostrar.push(col);
             });
 
-            // 2. DESENHAR O CABEÇALHO (Só as colunas permitidas)
+            // DESENHAR CABEÇALHO
             colunasParaMostrar.forEach(coluna => {
                 const th = document.createElement("th");
                 th.textContent = coluna;
                 tableHeader.appendChild(th);
             });
 
-            // 3. DESENHAR AS LINHAS
+            // DESENHAR LINHAS
             dados.forEach(linha => {
                 const tr = document.createElement("tr");
                 colunasParaMostrar.forEach(coluna => {
