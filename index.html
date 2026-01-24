@@ -3,22 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <link rel="icon" type="image/png" href="./brasao_unidade.png">
-    
     <title>Escala CBMMA - COCB-M</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         /* --- ESTILOS GERAIS --- */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background-color: #fff5f5; 
-            color: #333; 
-        }
-
-        /* --- CABEÇALHO --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #fff5f5; color: #333; }
+        
         header {
             background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
             color: #fff;
@@ -27,72 +18,20 @@
             margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(183, 28, 28, 0.3);
             border-bottom: 4px solid #7f0000;
-            display: flex;             
-            align-items: center;       
-            justify-content: space-between;
-            text-align: center;          
+            display: flex; align-items: center; justify-content: space-between; text-align: center;
         }
-
-        .header-logo {
-            width: 85px; 
-            height: auto;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-            flex-shrink: 0;
-        }
-
-        .header-text {
-            flex-grow: 1;
-            padding: 0 20px;
-        }
-
+        .header-logo { width: 85px; height: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); flex-shrink: 0; }
+        .header-text { flex-grow: 1; padding: 0 20px; }
         .header-text h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
         .header-text p { margin-top: 5px; opacity: 0.9; font-size: 1.5rem; font-weight: 600; }
+        @media (max-width: 700px) { header { flex-direction: column; gap: 15px; } }
 
-        @media (max-width: 700px) {
-            header { flex-direction: column; gap: 15px; }
-        }
-
-        /* --- CONTROLES --- */
-        .controls { 
-            margin-bottom: 20px; 
-            display: flex; 
-            gap: 15px; 
-            align-items: center; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .search-box { 
-            flex: 2; 
-            padding: 12px 15px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 6px; 
-            font-size: 1rem; 
-            transition: all 0.3s; 
-            min-width: 250px; 
-        }
-
-        .filter-select { 
-            flex: 1; 
-            padding: 12px 15px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 6px; 
-            font-size: 1rem; 
-            background-color: white; 
-            cursor: pointer; 
-            min-width: 200px; 
-            font-weight: 600;
-            color: #b71c1c;
-        }
-
+        .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: center; background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 250px; }
+        .filter-select { flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; background-color: white; cursor: pointer; min-width: 200px; font-weight: 600; color: #b71c1c; }
         .search-box:focus, .filter-select:focus { border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3); }
         #loading { color: #c0392b; font-weight: 700; display: none; font-size: 0.9rem; }
 
-        /* --- TABELA --- */
         .table-container { overflow-x: auto; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); background-color: #fff; border-radius: 8px; height: 65vh; overflow-y: auto; border: 1px solid #ffcdd2; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ffebee; font-size: 0.9rem; }
@@ -100,18 +39,28 @@
         tr:nth-child(even) { background-color: #fffafa; }
         tr:hover { background-color: #ffebee; transition: background-color 0.2s; }
         footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #b71c1c; font-weight: 600; }
+
+        /* --- ESTILOS DAS ETIQUETAS COLORIDAS --- */
+        .tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            color: white; /* Texto sempre branco para contrastar */
+            display: inline-block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
 
     <header>
         <img src="./brasao.png" alt="Brasão CBMMA" class="header-logo">
-        
         <div class="header-text">
             <h1>COMANDO OPERACIONAL METROPOLITANO</h1>
             <p>Controle de serviços em Grandes Eventos</p>
         </div>
-
         <img src="./brasao_unidade.png" onerror="this.style.opacity='0'" alt="Brasão Unidade" class="header-logo">
     </header>
 
@@ -134,7 +83,7 @@
 
     <script>
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdla33q3_rNMm8KTn518RipwwkZvv60sOMk79_tU2twWCAkV-cxHKvEoLJVV7sqw/pub?output=csv";
-
+        
         const tableHeader = document.getElementById("tableHeader");
         const tableBody = document.getElementById("tableBody");
         const loadingMsg = document.getElementById("loading");
@@ -149,7 +98,7 @@
                 complete: function(results) {
                     dadosCompletos = results.data;
                     preencherFiltroDatas(dadosCompletos);
-                    gerarTabela(dadosCompletos, "", ""); // Inicia sem filtros
+                    gerarTabela(dadosCompletos, "", "");
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
@@ -173,10 +122,8 @@
         function aplicarFiltros() {
             const termoTexto = searchInput.value.toLowerCase();
             const colunaSelecionada = columnFilter.value;
-
             const dadosFiltrados = dadosCompletos.filter(item => {
                 const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
-                
                 let matchColuna = true;
                 if (colunaSelecionada !== "") {
                     const valorNaCélula = item[colunaSelecionada];
@@ -184,12 +131,39 @@
                 }
                 return matchTexto && matchColuna;
             });
-
-            // Passamos os dados filtrados e TAMBÉM o termo de busca para a função gerar tabela
             gerarTabela(dadosFiltrados, colunaSelecionada, termoTexto);
         }
 
-        // --- FUNÇÃO DE TABELA (AGORA COM LÓGICA DE BUSCA INTELIGENTE) ---
+        // --- MÁGICA DAS CORES (REGRAS ATUALIZADAS) ---
+        function obterCorPorTexto(texto) {
+            if (!texto) return null;
+            
+            // Transformamos em minúsculo pra facilitar a comparação
+            const txt = String(texto).trim().toLowerCase();
+
+            // 1. Termina com "PRESTADO" -> VERDE
+            if (txt.endsWith("prestado")) {
+                return "#27ae60"; // Verde Esmeralda
+            }
+            
+            // 2. Contém "VOLUNTÁRIO" -> AZUL
+            if (txt.includes("voluntário") || txt.includes("voluntario")) {
+                return "#2980b9"; // Azul Forte
+            }
+
+            // 3. Termina com "FALTA SEM JUSTIFICATIVA" -> PRETO
+            if (txt.endsWith("falta sem justificativa")) {
+                return "#000000"; // Preto
+            }
+
+            // 4. Termina com "FALTA JUSTIFICADA" -> VERMELHO
+            if (txt.endsWith("falta justificada")) {
+                return "#c0392b"; // Vermelho
+            }
+
+            return null; // Sem cor
+        }
+
         function gerarTabela(dados, diaSelecionado, termoBusca) {
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
@@ -206,53 +180,50 @@
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
 
-                // CASO 1: SELECIONOU UM DIA ESPECÍFICO NO DROPDOWN
-                // Prioridade máxima: mostra só esse dia.
                 if (diaSelecionado !== "") {
-                    if (col === diaSelecionado) {
-                        colunasParaMostrar.push(col);
-                    } else if (!ehData && !ehUnidadeExtra) {
-                        // Mostra Info básica (Nome, Posto...), esconde datas extras e unidades extras
-                        colunasParaMostrar.push(col);
-                    }
+                    if (col === diaSelecionado) colunasParaMostrar.push(col);
+                    else if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
                     return;
                 }
-
-                // CASO 2: ESTÁ PESQUISANDO POR NOME (mas não selecionou data)
                 if (termoBusca !== "" && termoBusca.length > 0) {
                     if (!ehData) {
-                        // Se não for data, mostra (Nome, Posto...), menos as unidades extras
                         if (!ehUnidadeExtra) colunasParaMostrar.push(col);
                     } else {
-                        // SE FOR DATA: Verifica se o militar filtrado tem serviço nesse dia
-                        // A função .some() verifica se ALGUÉM da lista filtrada tem valor nessa coluna
                         const temServicoNesseDia = dados.some(militar => militar[col] && militar[col].trim() !== "");
-                        
-                        if (temServicoNesseDia) {
-                            colunasParaMostrar.push(col);
-                        }
+                        if (temServicoNesseDia) colunasParaMostrar.push(col);
                     }
                     return;
                 }
-
-                // CASO 3: SEM FILTRO NENHUM (Visão Geral)
-                // Mostra tudo
                 colunasParaMostrar.push(col);
             });
 
-            // DESENHAR CABEÇALHO
+            // CABEÇALHO
             colunasParaMostrar.forEach(coluna => {
                 const th = document.createElement("th");
                 th.textContent = coluna;
                 tableHeader.appendChild(th);
             });
 
-            // DESENHAR LINHAS
+            // LINHAS (Com pintura inteligente)
             dados.forEach(linha => {
                 const tr = document.createElement("tr");
                 colunasParaMostrar.forEach(coluna => {
                     const td = document.createElement("td");
-                    td.textContent = linha[coluna];
+                    const valor = linha[coluna];
+
+                    // Tenta achar uma cor pra esse texto
+                    const cor = obterCorPorTexto(valor);
+
+                    if (cor) {
+                        const tag = document.createElement("span");
+                        tag.className = "tag";
+                        tag.style.backgroundColor = cor;
+                        tag.textContent = valor;
+                        td.appendChild(tag);
+                    } else {
+                        td.textContent = valor;
+                    }
+
                     tr.appendChild(td);
                 });
                 tableBody.appendChild(tr);
