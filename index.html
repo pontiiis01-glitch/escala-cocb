@@ -42,14 +42,22 @@
 
         /* --- ESTILOS DAS ETIQUETAS COLORIDAS --- */
         .tag {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            color: white; /* Texto sempre branco para contrastar */
-            display: inline-block;
-            font-size: 0.85rem;
-            text-transform: uppercase;
+            padding: 4px 8px; border-radius: 4px; font-weight: 700; color: white;
+            display: inline-block; font-size: 0.85rem; text-transform: uppercase;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* --- COLUNA DE NUMERAÇÃO (#) --- */
+        th:first-child, td:first-child {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+            color: #7f8c8d;
+            background-color: #fdfdfd; /* Destacar levemente a coluna de números */
+        }
+        th:first-child {
+            background-color: #640000; /* Um vermelho mais escuro pro cabeçalho do numero */
+            color: #fff;
         }
     </style>
 </head>
@@ -134,34 +142,16 @@
             gerarTabela(dadosFiltrados, colunaSelecionada, termoTexto);
         }
 
-        // --- MÁGICA DAS CORES (REGRAS ATUALIZADAS) ---
         function obterCorPorTexto(texto) {
             if (!texto) return null;
-            
-            // Transformamos em minúsculo pra facilitar a comparação
             const txt = String(texto).trim().toLowerCase();
 
-            // 1. Termina com "PRESTADO" -> VERDE
-            if (txt.endsWith("prestado")) {
-                return "#27ae60"; // Verde Esmeralda
-            }
-            
-            // 2. Contém "VOLUNTÁRIO" -> AZUL
-            if (txt.includes("voluntário") || txt.includes("voluntario")) {
-                return "#2980b9"; // Azul Forte
-            }
+            if (txt.endsWith("prestado")) return "#27ae60"; 
+            if (txt.includes("voluntário") || txt.includes("voluntario")) return "#2980b9";
+            if (txt.endsWith("falta sem justificativa")) return "#000000";
+            if (txt.endsWith("falta justificada")) return "#c0392b";
 
-            // 3. Termina com "FALTA SEM JUSTIFICATIVA" -> PRETO
-            if (txt.endsWith("falta sem justificativa")) {
-                return "#000000"; // Preto
-            }
-
-            // 4. Termina com "FALTA JUSTIFICADA" -> VERMELHO
-            if (txt.endsWith("falta justificada")) {
-                return "#c0392b"; // Vermelho
-            }
-
-            return null; // Sem cor
+            return null;
         }
 
         function gerarTabela(dados, diaSelecionado, termoBusca) {
@@ -176,6 +166,12 @@
             const todasColunas = Object.keys(dados[0]);
             const colunasParaMostrar = [];
 
+            // 1. ADICIONA COLUNA DE NUMERAÇÃO (#) NO CABEÇALHO
+            const thNum = document.createElement("th");
+            thNum.textContent = "#"; // Símbolo de número
+            tableHeader.appendChild(thNum);
+
+            // 2. FILTRA AS OUTRAS COLUNAS
             todasColunas.forEach(col => {
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
@@ -197,21 +193,26 @@
                 colunasParaMostrar.push(col);
             });
 
-            // CABEÇALHO
+            // 3. DESENHA O RESTO DO CABEÇALHO
             colunasParaMostrar.forEach(coluna => {
                 const th = document.createElement("th");
                 th.textContent = coluna;
                 tableHeader.appendChild(th);
             });
 
-            // LINHAS (Com pintura inteligente)
-            dados.forEach(linha => {
+            // 4. DESENHA AS LINHAS (COM NUMERAÇÃO DINÂMICA)
+            dados.forEach((linha, index) => {
                 const tr = document.createElement("tr");
+
+                // --- CÉLULA DO NÚMERO ---
+                const tdNum = document.createElement("td");
+                tdNum.textContent = index + 1; // O contador é o índice + 1 (1, 2, 3...)
+                tr.appendChild(tdNum);
+                // ------------------------
+
                 colunasParaMostrar.forEach(coluna => {
                     const td = document.createElement("td");
                     const valor = linha[coluna];
-
-                    // Tenta achar uma cor pra esse texto
                     const cor = obterCorPorTexto(valor);
 
                     if (cor) {
