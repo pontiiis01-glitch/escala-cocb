@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="./brasao_unidade.png">
-    <title>Escala CBMMA - COCB-M</title>
+    <title>CONTROLE GRANDES EVENTOS - COCB</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         /* --- ESTILOS GERAIS --- */
@@ -26,9 +26,25 @@
         .header-text p { margin-top: 5px; opacity: 0.9; font-size: 1.5rem; font-weight: 600; }
         @media (max-width: 700px) { header { flex-direction: column; gap: 15px; } }
 
-        .controls { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; justify-content: center; background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 250px; }
-        .filter-select { flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; background-color: white; cursor: pointer; min-width: 200px; font-weight: 600; color: #b71c1c; }
+        /* --- CONTROLES (AGORA COM 3 ITENS) --- */
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 200px; }
+        
+        /* Estilo para os DOIS selects (Data e Situação) */
+        .filter-select { 
+            flex: 1; 
+            padding: 12px 15px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 6px; 
+            font-size: 1rem; 
+            background-color: white; 
+            cursor: pointer; 
+            min-width: 180px; 
+            font-weight: 600; 
+            color: #b71c1c; 
+        }
+
         .search-box:focus, .filter-select:focus { border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3); }
         #loading { color: #c0392b; font-weight: 700; display: none; font-size: 0.9rem; }
 
@@ -40,25 +56,11 @@
         tr:hover { background-color: #ffebee; transition: background-color 0.2s; }
         footer { text-align: center; margin-top: 30px; font-size: 0.85rem; color: #b71c1c; font-weight: 600; }
 
-        /* --- ESTILOS DAS ETIQUETAS COLORIDAS --- */
-        .tag {
-            padding: 4px 8px; border-radius: 4px; font-weight: 700; color: white;
-            display: inline-block; font-size: 0.85rem; text-transform: uppercase;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        /* --- COLUNA DE NUMERAÇÃO (#) --- */
-        th:first-child, td:first-child {
-            width: 40px;
-            text-align: center;
-            font-weight: bold;
-            color: #7f8c8d;
-            background-color: #fdfdfd; /* Destacar levemente a coluna de números */
-        }
-        th:first-child {
-            background-color: #640000; /* Um vermelho mais escuro pro cabeçalho do numero */
-            color: #fff;
-        }
+        .tag { padding: 4px 8px; border-radius: 4px; font-weight: 700; color: white; display: inline-block; font-size: 0.85rem; text-transform: uppercase; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        
+        /* Coluna de Numeração */
+        th:first-child, td:first-child { width: 40px; text-align: center; font-weight: bold; color: #7f8c8d; background-color: #fdfdfd; }
+        th:first-child { background-color: #640000; color: #fff; }
     </style>
 </head>
 <body>
@@ -74,10 +76,16 @@
 
     <div class="controls">
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar Militar, Posto ou Unidade...">
-        <select id="columnFilter" class="filter-select">
-            <option value="">📅 Filtrar por Dia de Serviço...</option>
+        
+        <select id="statusFilter" class="filter-select">
+            <option value="">🔰 Todas as Situações</option>
         </select>
-        <span id="loading">🚒 Carregando dados...</span>
+
+        <select id="columnFilter" class="filter-select">
+            <option value="">📅 Filtrar por Data...</option>
+        </select>
+        
+        <span id="loading">🚒 Carregando...</span>
     </div>
 
     <div class="table-container">
@@ -92,11 +100,18 @@
     <script>
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdla33q3_rNMm8KTn518RipwwkZvv60sOMk79_tU2twWCAkV-cxHKvEoLJVV7sqw/pub?output=csv";
         
+        // --- CONFIGURAÇÃO: NOME DA COLUNA DE SITUAÇÃO NA PLANILHA ---
+        // Se na sua planilha estiver "Status", "Obs" ou "Estado", mude aqui dentro das aspas:
+        const COLUNA_SITUACAO = "SITUAÇÃO"; 
+        // -----------------------------------------------------------
+
         const tableHeader = document.getElementById("tableHeader");
         const tableBody = document.getElementById("tableBody");
         const loadingMsg = document.getElementById("loading");
         const searchInput = document.getElementById("searchInput");
         const columnFilter = document.getElementById("columnFilter");
+        const statusFilter = document.getElementById("statusFilter"); // Novo Elemento
+        
         let dadosCompletos = [];
 
         function carregarDados() {
@@ -106,6 +121,7 @@
                 complete: function(results) {
                     dadosCompletos = results.data;
                     preencherFiltroDatas(dadosCompletos);
+                    preencherFiltroSituacao(dadosCompletos); // Chama a nova função
                     gerarTabela(dadosCompletos, "", "");
                     loadingMsg.style.display = "none";
                 },
@@ -127,18 +143,55 @@
             });
         }
 
+        // --- NOVA FUNÇÃO: PREENCHE O FILTRO DE SITUAÇÃO ---
+        function preencherFiltroSituacao(dados) {
+            if (dados.length === 0) return;
+
+            // 1. Pega todos os valores da coluna SITUAÇÃO
+            const todasSituacoes = dados.map(item => item[COLUNA_SITUACAO]).filter(val => val); // .filter remove vazios
+            
+            // 2. Remove duplicados (cria uma lista única)
+            const situacoesUnicas = [...new Set(todasSituacoes)].sort();
+
+            statusFilter.innerHTML = '<option value="">🔰 Todas as Situações</option>';
+
+            situacoesUnicas.forEach(sit => {
+                if(sit.trim() !== "") { // Só adiciona se não for texto vazio
+                    const option = document.createElement("option");
+                    option.value = sit;
+                    option.textContent = sit;
+                    statusFilter.appendChild(option);
+                }
+            });
+        }
+
         function aplicarFiltros() {
             const termoTexto = searchInput.value.toLowerCase();
             const colunaSelecionada = columnFilter.value;
+            const statusSelecionado = statusFilter.value; // Pega o valor do novo filtro
+
             const dadosFiltrados = dadosCompletos.filter(item => {
+                // Filtro 1: Texto (Busca Geral)
                 const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
+                
+                // Filtro 2: Coluna de Data (Se tem serviço naquele dia)
                 let matchColuna = true;
                 if (colunaSelecionada !== "") {
                     const valorNaCélula = item[colunaSelecionada];
                     matchColuna = valorNaCélula && valorNaCélula.trim() !== "";
                 }
-                return matchTexto && matchColuna;
+
+                // Filtro 3: Situação (Pronto, Férias, etc.)
+                let matchSituacao = true;
+                if (statusSelecionado !== "") {
+                    // Verifica se a coluna "SITUAÇÃO" é igual ao que foi escolhido no filtro
+                    matchSituacao = item[COLUNA_SITUACAO] === statusSelecionado;
+                }
+
+                // Só passa se atender aos 3 requisitos
+                return matchTexto && matchColuna && matchSituacao;
             });
+            
             gerarTabela(dadosFiltrados, colunaSelecionada, termoTexto);
         }
 
@@ -150,6 +203,9 @@
             if (txt.includes("voluntário") || txt.includes("voluntario")) return "#2980b9";
             if (txt.endsWith("falta sem justificativa")) return "#000000";
             if (txt.endsWith("falta justificada")) return "#c0392b";
+            
+            // Opcional: Pintar a situação de "Pronto" de verde claro ou algo assim?
+            if (txt === "pronto") return "#16a085";
 
             return null;
         }
@@ -159,19 +215,17 @@
             tableBody.innerHTML = "";
 
             if (dados.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="100%" style="text-align:center; padding: 20px; color: #b71c1c;">Nenhum militar encontrado.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="100%" style="text-align:center; padding: 20px; color: #b71c1c;">Nenhum militar encontrado com esses filtros.</td></tr>';
                 return;
             }
 
             const todasColunas = Object.keys(dados[0]);
             const colunasParaMostrar = [];
 
-            // 1. ADICIONA COLUNA DE NUMERAÇÃO (#) NO CABEÇALHO
             const thNum = document.createElement("th");
-            thNum.textContent = "#"; // Símbolo de número
+            thNum.textContent = "#";
             tableHeader.appendChild(thNum);
 
-            // 2. FILTRA AS OUTRAS COLUNAS
             todasColunas.forEach(col => {
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
@@ -193,22 +247,18 @@
                 colunasParaMostrar.push(col);
             });
 
-            // 3. DESENHA O RESTO DO CABEÇALHO
             colunasParaMostrar.forEach(coluna => {
                 const th = document.createElement("th");
                 th.textContent = coluna;
                 tableHeader.appendChild(th);
             });
 
-            // 4. DESENHA AS LINHAS (COM NUMERAÇÃO DINÂMICA)
             dados.forEach((linha, index) => {
                 const tr = document.createElement("tr");
 
-                // --- CÉLULA DO NÚMERO ---
                 const tdNum = document.createElement("td");
-                tdNum.textContent = index + 1; // O contador é o índice + 1 (1, 2, 3...)
+                tdNum.textContent = index + 1;
                 tr.appendChild(tdNum);
-                // ------------------------
 
                 colunasParaMostrar.forEach(coluna => {
                     const td = document.createElement("td");
@@ -233,6 +283,7 @@
 
         searchInput.addEventListener("keyup", aplicarFiltros);
         columnFilter.addEventListener("change", aplicarFiltros);
+        statusFilter.addEventListener("change", aplicarFiltros); // Escuta mudanças no novo filtro
         carregarDados();
     </script>
 </body>
