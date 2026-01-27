@@ -28,8 +28,23 @@
 
         /* --- CONTROLES --- */
         .controls { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
         .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 200px; }
-        .filter-select { flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; background-color: white; cursor: pointer; min-width: 180px; font-weight: 600; color: #b71c1c; }
+        
+        /* Estilo unificado para os selects */
+        .filter-select { 
+            flex: 1; 
+            padding: 12px 15px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 6px; 
+            font-size: 1rem; 
+            background-color: white; 
+            cursor: pointer; 
+            min-width: 160px; /* Largura mínima ajustada */
+            font-weight: 600; 
+            color: #b71c1c; 
+        }
+
         .search-box:focus, .filter-select:focus { border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3); }
         #loading { color: #c0392b; font-weight: 700; display: none; font-size: 0.9rem; }
 
@@ -59,12 +74,19 @@
 
     <div class="controls">
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar Militar, Posto ou Unidade...">
+        
         <select id="statusFilter" class="filter-select">
             <option value="">🔰 Todas as Situações</option>
         </select>
-        <select id="columnFilter" class="filter-select">
-            <option value="">📅 Selecione um Dia...</option>
+
+        <select id="yearFilter" class="filter-select">
+            <option value="">📅 Ano...</option>
         </select>
+
+        <select id="columnFilter" class="filter-select">
+            <option value="">📆 Escolha o Ano Primeiro</option>
+        </select>
+        
         <span id="loading">🚒 Carregando...</span>
     </div>
 
@@ -85,10 +107,14 @@
         const tableBody = document.getElementById("tableBody");
         const loadingMsg = document.getElementById("loading");
         const searchInput = document.getElementById("searchInput");
-        const columnFilter = document.getElementById("columnFilter");
+        
+        // Nossos 3 filtros principais
         const statusFilter = document.getElementById("statusFilter");
+        const yearFilter = document.getElementById("yearFilter");
+        const columnFilter = document.getElementById("columnFilter"); // Esse é o "Day Filter"
         
         let dadosCompletos = [];
+        let colunasDeData = []; // Armazena todas as colunas que são datas
 
         function carregarDados() {
             loadingMsg.style.display = "block";
@@ -96,75 +122,90 @@
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
                     dadosCompletos = results.data;
-                    preencherFiltroDatas(dadosCompletos);
+                    
+                    // Identifica quais colunas são datas
+                    colunasDeData = Object.keys(dadosCompletos[0]).filter(col => col.includes("/") && /[0-9]/.test(col));
+                    
                     preencherFiltroSituacao(dadosCompletos);
-                    gerarTabela(dadosCompletos, "", ""); // Inicia escondendo as datas
+                    preencherFiltroAnos(); // Preenche a caixinha de anos
+                    
+                    gerarTabela(dadosCompletos, "", ""); // Inicia limpo
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
             });
         }
 
-        // --- NOVA FUNÇÃO DE DATAS COM ANOS SEPARADOS ---
-        function preencherFiltroDatas(dados) {
-            if (dados.length === 0) return;
-            const colunas = Object.keys(dados[0]);
+        // --- 1. PREENCHER CAIXA DE ANOS ---
+        function preencherFiltroAnos() {
+            const anosUnicos = new Set();
             
-            // Limpa e cria as opções iniciais
-            columnFilter.innerHTML = '';
-            
-            // Opção 1: Vazio (Início Limpo)
-            const optVazio = document.createElement("option");
-            optVazio.value = "";
-            optVazio.textContent = "Selecione uma opção...";
-            columnFilter.appendChild(optVazio);
-
-            // Opção 2: Mostrar Tudo (Visão Geral)
-            const optTodos = document.createElement("option");
-            optTodos.value = "TODOS";
-            optTodos.textContent = "👀 Visão Geral (Todos os dias)";
-            optTodos.style.fontWeight = "bold";
-            columnFilter.appendChild(optTodos);
-
-            // Agrupamento por Anos
-            const gruposPorAno = {};
-
-            colunas.forEach(coluna => {
-                // Regex para achar datas (DD/MM/AAAA ou DD/MM)
-                if (coluna.includes("/") && /[0-9]/.test(coluna)) { 
-                    
-                    // Tenta descobrir o ano (pega os ultimos 4 digitos)
-                    // Se for "31/12/2025", pega "2025". Se não achar, joga pra "Outros"
-                    let ano = "Outros";
-                    const matchAno = coluna.match(/\d{4}/);
-                    if (matchAno) {
-                        ano = matchAno[0];
-                    }
-
-                    if (!gruposPorAno[ano]) {
-                        gruposPorAno[ano] = [];
-                    }
-                    gruposPorAno[ano].push(coluna);
+            colunasDeData.forEach(dataStr => {
+                // Tenta pegar os ultimos 4 digitos (ano)
+                const match = dataStr.match(/\d{4}/);
+                if (match) {
+                    anosUnicos.add(match[0]);
+                } else {
+                    anosUnicos.add("Outros");
                 }
             });
 
-            // Ordena os anos (2024, 2025, 2026...)
-            const anosOrdenados = Object.keys(gruposPorAno).sort();
-
+            // Ordena e cria as opções
+            const anosOrdenados = Array.from(anosUnicos).sort();
+            
+            yearFilter.innerHTML = '<option value="">📅 Ano...</option>';
             anosOrdenados.forEach(ano => {
-                const optGroup = document.createElement("optgroup");
-                optGroup.label = "Ano " + ano;
-
-                gruposPorAno[ano].forEach(dataColuna => {
-                    const option = document.createElement("option");
-                    option.value = dataColuna;
-                    option.textContent = dataColuna;
-                    optGroup.appendChild(option);
-                });
-
-                columnFilter.appendChild(optGroup);
+                const option = document.createElement("option");
+                option.value = ano;
+                option.textContent = "Ano " + ano;
+                yearFilter.appendChild(option);
             });
         }
+
+        // --- 2. ATUALIZAR LISTA DE DIAS QUANDO MUDA O ANO ---
+        function atualizarListaDias() {
+            const anoSelecionado = yearFilter.value;
+            
+            // Limpa o filtro de dias
+            columnFilter.innerHTML = '';
+
+            if (anoSelecionado === "") {
+                const opt = document.createElement("option");
+                opt.textContent = "📆 Escolha o Ano Primeiro";
+                columnFilter.appendChild(opt);
+                columnFilter.disabled = true;
+                aplicarFiltros(); // Atualiza a tabela (pra limpar se tiver algo)
+                return;
+            }
+
+            columnFilter.disabled = false;
+
+            // Opção Padrão (Vazio - Oculto)
+            const optVazio = document.createElement("option");
+            optVazio.value = "";
+            optVazio.textContent = "Selecione o dia...";
+            columnFilter.appendChild(optVazio);
+
+            // Opção "Ver Todos desse Ano"
+            const optTodos = document.createElement("option");
+            optTodos.value = "TODOS_ANO";
+            optTodos.textContent = "👀 Ver todos de " + anoSelecionado;
+            optTodos.style.fontWeight = "bold";
+            columnFilter.appendChild(optTodos);
+
+            // Adiciona apenas os dias que contêm o ano selecionado
+            colunasDeData.forEach(dataStr => {
+                if (dataStr.includes(anoSelecionado) || (anoSelecionado === "Outros" && !/\d{4}/.test(dataStr))) {
+                    const option = document.createElement("option");
+                    option.value = dataStr;
+                    option.textContent = dataStr;
+                    columnFilter.appendChild(option);
+                }
+            });
+            
+            aplicarFiltros(); // Atualiza a tabela
+        }
+
 
         function preencherFiltroSituacao(dados) {
             if (dados.length === 0) return;
@@ -183,19 +224,22 @@
 
         function aplicarFiltros() {
             const termoTexto = searchInput.value.toLowerCase();
-            const colunaSelecionada = columnFilter.value;
+            const anoSelecionado = yearFilter.value;
+            const diaSelecionado = columnFilter.value;
             const statusSelecionado = statusFilter.value;
 
             const dadosFiltrados = dadosCompletos.filter(item => {
+                // Filtro Texto
                 const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
                 
+                // Filtro Coluna (Dia Específico)
                 let matchColuna = true;
-                // Se for "TODOS" ou VAZIO, não filtra por célula vazia ainda (tratamos na visualização)
-                if (colunaSelecionada !== "" && colunaSelecionada !== "TODOS") {
-                    const valorNaCélula = item[colunaSelecionada];
+                if (diaSelecionado !== "" && diaSelecionado !== "TODOS_ANO") {
+                    const valorNaCélula = item[diaSelecionado];
                     matchColuna = valorNaCélula && valorNaCélula.trim() !== "";
                 }
 
+                // Filtro Situação
                 let matchSituacao = true;
                 if (statusSelecionado !== "") {
                     matchSituacao = item[COLUNA_SITUACAO] === statusSelecionado;
@@ -204,7 +248,8 @@
                 return matchTexto && matchColuna && matchSituacao;
             });
             
-            gerarTabela(dadosFiltrados, colunaSelecionada, termoTexto);
+            // Enviamos para a tabela saber o que mostrar
+            gerarTabela(dadosFiltrados, diaSelecionado, anoSelecionado, termoTexto);
         }
 
         function obterCorPorTexto(texto) {
@@ -223,7 +268,8 @@
             return texto.replace(/\*(.*?)\*/g, '<b style="color: #b71c1c; font-weight: 900;">$1</b>');
         }
 
-        function gerarTabela(dados, diaSelecionado, termoBusca) {
+        // --- GERADOR DE TABELA ATUALIZADO ---
+        function gerarTabela(dados, diaSelecionado, anoSelecionado, termoBusca) {
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
 
@@ -243,40 +289,29 @@
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
 
-                // CENÁRIO 1: INÍCIO (Tudo Oculto)
-                // Se não selecionou nada, esconde as datas
-                if (diaSelecionado === "") {
+                // SE NÃO TEM ANO OU DIA SELECIONADO -> Esconde datas, mostra infos básicas
+                if (anoSelecionado === "" || diaSelecionado === "") {
                     if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
                     return;
                 }
 
-                // CENÁRIO 2: VISÃO GERAL (Mostra Tudo)
-                if (diaSelecionado === "TODOS") {
-                    colunasParaMostrar.push(col);
-                    return;
-                }
-
-                // CENÁRIO 3: DIA ESPECÍFICO SELECIONADO
-                if (diaSelecionado !== "" && diaSelecionado !== "TODOS") {
-                    if (col === diaSelecionado) colunasParaMostrar.push(col);
-                    else if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
-                    return;
-                }
-                
-                // CENÁRIO 4: BUSCA POR NOME (Mostra dias com serviço)
-                // (Essa lógica conflita um pouco com o filtro oculto inicial, 
-                // então priorizamos o filtro de coluna se ele estiver ativo)
-                if (termoBusca !== "" && termoBusca.length > 0 && diaSelecionado === "") {
-                     if (!ehData) {
-                        if (!ehUnidadeExtra) colunasParaMostrar.push(col);
-                    } else {
-                        const temServicoNesseDia = dados.some(militar => militar[col] && militar[col].trim() !== "");
-                        if (temServicoNesseDia) colunasParaMostrar.push(col);
+                // SE ESCOLHEU "VER TODOS DO ANO"
+                if (diaSelecionado === "TODOS_ANO") {
+                    // Mostra infos básicas
+                    if (!ehData && !ehUnidadeExtra) {
+                        colunasParaMostrar.push(col);
+                        return;
+                    }
+                    // E mostra datas que sejam daquele ano
+                    if (ehData && col.includes(anoSelecionado)) {
+                        colunasParaMostrar.push(col);
                     }
                     return;
                 }
 
-                colunasParaMostrar.push(col);
+                // SE ESCOLHEU UM DIA ESPECÍFICO
+                if (col === diaSelecionado) colunasParaMostrar.push(col);
+                else if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
             });
 
             colunasParaMostrar.forEach(coluna => {
@@ -314,9 +349,13 @@
         }
 
         searchInput.addEventListener("keyup", aplicarFiltros);
-        columnFilter.addEventListener("change", aplicarFiltros);
         statusFilter.addEventListener("change", aplicarFiltros); 
+        
+        // Listeners Especiais para Ano/Dia
+        yearFilter.addEventListener("change", atualizarListaDias); // Mudou ano -> Atualiza lista de dias
+        columnFilter.addEventListener("change", aplicarFiltros);   // Mudou dia -> Aplica filtro na tabela
+
         carregarDados();
     </script>
 </body>
-</html>ss
+</html>
