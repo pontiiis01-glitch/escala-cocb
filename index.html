@@ -49,7 +49,7 @@
 <body>
 
     <header>
-        <img src="./brasao.png" alt="Brasão CBMMA" class="header-logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg/240px-Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg.png" alt="Brasão CBMMA" class="header-logo">
         <div class="header-text">
             <h1>COMANDO OPERACIONAL METROPOLITANO</h1>
             <p>Controle de serviços em Grandes Eventos</p>
@@ -63,7 +63,7 @@
             <option value="">🔰 Todas as Situações</option>
         </select>
         <select id="columnFilter" class="filter-select">
-            <option value="">📅 Filtrar por Data...</option>
+            <option value="">📅 Selecione um Dia...</option>
         </select>
         <span id="loading">🚒 Carregando...</span>
     </div>
@@ -98,24 +98,71 @@
                     dadosCompletos = results.data;
                     preencherFiltroDatas(dadosCompletos);
                     preencherFiltroSituacao(dadosCompletos);
-                    gerarTabela(dadosCompletos, "", "");
+                    gerarTabela(dadosCompletos, "", ""); // Inicia escondendo as datas
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
             });
         }
 
+        // --- NOVA FUNÇÃO DE DATAS COM ANOS SEPARADOS ---
         function preencherFiltroDatas(dados) {
             if (dados.length === 0) return;
             const colunas = Object.keys(dados[0]);
-            columnFilter.innerHTML = '<option value="">📅 Todos os Dias (Visão Geral)</option>';
+            
+            // Limpa e cria as opções iniciais
+            columnFilter.innerHTML = '';
+            
+            // Opção 1: Vazio (Início Limpo)
+            const optVazio = document.createElement("option");
+            optVazio.value = "";
+            optVazio.textContent = "Selecione uma opção...";
+            columnFilter.appendChild(optVazio);
+
+            // Opção 2: Mostrar Tudo (Visão Geral)
+            const optTodos = document.createElement("option");
+            optTodos.value = "TODOS";
+            optTodos.textContent = "👀 Visão Geral (Todos os dias)";
+            optTodos.style.fontWeight = "bold";
+            columnFilter.appendChild(optTodos);
+
+            // Agrupamento por Anos
+            const gruposPorAno = {};
+
             colunas.forEach(coluna => {
+                // Regex para achar datas (DD/MM/AAAA ou DD/MM)
                 if (coluna.includes("/") && /[0-9]/.test(coluna)) { 
-                    const option = document.createElement("option");
-                    option.value = coluna;
-                    option.textContent = coluna;
-                    columnFilter.appendChild(option);
+                    
+                    // Tenta descobrir o ano (pega os ultimos 4 digitos)
+                    // Se for "31/12/2025", pega "2025". Se não achar, joga pra "Outros"
+                    let ano = "Outros";
+                    const matchAno = coluna.match(/\d{4}/);
+                    if (matchAno) {
+                        ano = matchAno[0];
+                    }
+
+                    if (!gruposPorAno[ano]) {
+                        gruposPorAno[ano] = [];
+                    }
+                    gruposPorAno[ano].push(coluna);
                 }
+            });
+
+            // Ordena os anos (2024, 2025, 2026...)
+            const anosOrdenados = Object.keys(gruposPorAno).sort();
+
+            anosOrdenados.forEach(ano => {
+                const optGroup = document.createElement("optgroup");
+                optGroup.label = "Ano " + ano;
+
+                gruposPorAno[ano].forEach(dataColuna => {
+                    const option = document.createElement("option");
+                    option.value = dataColuna;
+                    option.textContent = dataColuna;
+                    optGroup.appendChild(option);
+                });
+
+                columnFilter.appendChild(optGroup);
             });
         }
 
@@ -143,7 +190,8 @@
                 const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
                 
                 let matchColuna = true;
-                if (colunaSelecionada !== "") {
+                // Se for "TODOS" ou VAZIO, não filtra por célula vazia ainda (tratamos na visualização)
+                if (colunaSelecionada !== "" && colunaSelecionada !== "TODOS") {
                     const valorNaCélula = item[colunaSelecionada];
                     matchColuna = valorNaCélula && valorNaCélula.trim() !== "";
                 }
@@ -170,10 +218,8 @@
             return null;
         }
 
-        // --- FUNÇÃO DE FORMATAR TEXTO (PROCURA OS ASTERISCOS) ---
         function formatarNomeGuerra(texto) {
             if (!texto) return "";
-            // Substitui *texto* por <b>texto</b>
             return texto.replace(/\*(.*?)\*/g, '<b style="color: #b71c1c; font-weight: 900;">$1</b>');
         }
 
@@ -197,13 +243,31 @@
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
 
-                if (diaSelecionado !== "") {
+                // CENÁRIO 1: INÍCIO (Tudo Oculto)
+                // Se não selecionou nada, esconde as datas
+                if (diaSelecionado === "") {
+                    if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
+                    return;
+                }
+
+                // CENÁRIO 2: VISÃO GERAL (Mostra Tudo)
+                if (diaSelecionado === "TODOS") {
+                    colunasParaMostrar.push(col);
+                    return;
+                }
+
+                // CENÁRIO 3: DIA ESPECÍFICO SELECIONADO
+                if (diaSelecionado !== "" && diaSelecionado !== "TODOS") {
                     if (col === diaSelecionado) colunasParaMostrar.push(col);
                     else if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
                     return;
                 }
-                if (termoBusca !== "" && termoBusca.length > 0) {
-                    if (!ehData) {
+                
+                // CENÁRIO 4: BUSCA POR NOME (Mostra dias com serviço)
+                // (Essa lógica conflita um pouco com o filtro oculto inicial, 
+                // então priorizamos o filtro de coluna se ele estiver ativo)
+                if (termoBusca !== "" && termoBusca.length > 0 && diaSelecionado === "") {
+                     if (!ehData) {
                         if (!ehUnidadeExtra) colunasParaMostrar.push(col);
                     } else {
                         const temServicoNesseDia = dados.some(militar => militar[col] && militar[col].trim() !== "");
@@ -211,6 +275,7 @@
                     }
                     return;
                 }
+
                 colunasParaMostrar.push(col);
             });
 
@@ -236,11 +301,9 @@
                         const tag = document.createElement("span");
                         tag.className = "tag";
                         tag.style.backgroundColor = cor;
-                        // Usa innerHTML para permitir o negrito dentro da etiqueta
                         tag.innerHTML = formatarNomeGuerra(valorOriginal);
                         td.appendChild(tag);
                     } else {
-                        // Usa innerHTML para permitir o negrito na célula normal
                         td.innerHTML = formatarNomeGuerra(valorOriginal);
                     }
 
@@ -256,4 +319,4 @@
         carregarDados();
     </script>
 </body>
-</html>
+</html>ss
