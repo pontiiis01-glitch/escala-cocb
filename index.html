@@ -31,7 +31,6 @@
         
         .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 200px; }
         
-        /* Estilo unificado para os selects */
         .filter-select { 
             flex: 1; 
             padding: 12px 15px; 
@@ -40,7 +39,7 @@
             font-size: 1rem; 
             background-color: white; 
             cursor: pointer; 
-            min-width: 160px; /* Largura mínima ajustada */
+            min-width: 160px; 
             font-weight: 600; 
             color: #b71c1c; 
         }
@@ -64,7 +63,7 @@
 <body>
 
     <header>
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg/240px-Bras%C3%A3o_do_Corpo_de_Bombeiros_Militar_do_Estado_do_Maranh%C3%A3o.svg.png" alt="Brasão CBMMA" class="header-logo">
+        <img src="./brasao.png" alt="Brasão CBMMA" class="header-logo">
         <div class="header-text">
             <h1>COMANDO OPERACIONAL METROPOLITANO</h1>
             <p>Controle de serviços em Grandes Eventos</p>
@@ -74,19 +73,15 @@
 
     <div class="controls">
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar Militar, Posto ou Unidade...">
-        
         <select id="statusFilter" class="filter-select">
             <option value="">🔰 Todas as Situações</option>
         </select>
-
         <select id="yearFilter" class="filter-select">
             <option value="">📅 Ano...</option>
         </select>
-
         <select id="columnFilter" class="filter-select">
             <option value="">📆 Escolha o Ano Primeiro</option>
         </select>
-        
         <span id="loading">🚒 Carregando...</span>
     </div>
 
@@ -107,14 +102,12 @@
         const tableBody = document.getElementById("tableBody");
         const loadingMsg = document.getElementById("loading");
         const searchInput = document.getElementById("searchInput");
-        
-        // Nossos 3 filtros principais
         const statusFilter = document.getElementById("statusFilter");
         const yearFilter = document.getElementById("yearFilter");
-        const columnFilter = document.getElementById("columnFilter"); // Esse é o "Day Filter"
+        const columnFilter = document.getElementById("columnFilter");
         
         let dadosCompletos = [];
-        let colunasDeData = []; // Armazena todas as colunas que são datas
+        let colunasDeData = []; 
 
         function carregarDados() {
             loadingMsg.style.display = "block";
@@ -122,37 +115,24 @@
                 download: true, header: true, skipEmptyLines: true,
                 complete: function(results) {
                     dadosCompletos = results.data;
-                    
-                    // Identifica quais colunas são datas
                     colunasDeData = Object.keys(dadosCompletos[0]).filter(col => col.includes("/") && /[0-9]/.test(col));
-                    
                     preencherFiltroSituacao(dadosCompletos);
-                    preencherFiltroAnos(); // Preenche a caixinha de anos
-                    
-                    gerarTabela(dadosCompletos, "", ""); // Inicia limpo
+                    preencherFiltroAnos(); 
+                    gerarTabela(dadosCompletos, "", "", ""); // Inicia limpo
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
             });
         }
 
-        // --- 1. PREENCHER CAIXA DE ANOS ---
         function preencherFiltroAnos() {
             const anosUnicos = new Set();
-            
             colunasDeData.forEach(dataStr => {
-                // Tenta pegar os ultimos 4 digitos (ano)
                 const match = dataStr.match(/\d{4}/);
-                if (match) {
-                    anosUnicos.add(match[0]);
-                } else {
-                    anosUnicos.add("Outros");
-                }
+                if (match) anosUnicos.add(match[0]);
+                else anosUnicos.add("Outros");
             });
-
-            // Ordena e cria as opções
             const anosOrdenados = Array.from(anosUnicos).sort();
-            
             yearFilter.innerHTML = '<option value="">📅 Ano...</option>';
             anosOrdenados.forEach(ano => {
                 const option = document.createElement("option");
@@ -162,11 +142,8 @@
             });
         }
 
-        // --- 2. ATUALIZAR LISTA DE DIAS QUANDO MUDA O ANO ---
         function atualizarListaDias() {
             const anoSelecionado = yearFilter.value;
-            
-            // Limpa o filtro de dias
             columnFilter.innerHTML = '';
 
             if (anoSelecionado === "") {
@@ -174,26 +151,22 @@
                 opt.textContent = "📆 Escolha o Ano Primeiro";
                 columnFilter.appendChild(opt);
                 columnFilter.disabled = true;
-                aplicarFiltros(); // Atualiza a tabela (pra limpar se tiver algo)
+                aplicarFiltros(); 
                 return;
             }
 
             columnFilter.disabled = false;
-
-            // Opção Padrão (Vazio - Oculto)
             const optVazio = document.createElement("option");
             optVazio.value = "";
             optVazio.textContent = "Selecione o dia...";
             columnFilter.appendChild(optVazio);
 
-            // Opção "Ver Todos desse Ano"
             const optTodos = document.createElement("option");
             optTodos.value = "TODOS_ANO";
             optTodos.textContent = "👀 Ver todos de " + anoSelecionado;
             optTodos.style.fontWeight = "bold";
             columnFilter.appendChild(optTodos);
 
-            // Adiciona apenas os dias que contêm o ano selecionado
             colunasDeData.forEach(dataStr => {
                 if (dataStr.includes(anoSelecionado) || (anoSelecionado === "Outros" && !/\d{4}/.test(dataStr))) {
                     const option = document.createElement("option");
@@ -202,10 +175,8 @@
                     columnFilter.appendChild(option);
                 }
             });
-            
-            aplicarFiltros(); // Atualiza a tabela
+            aplicarFiltros(); 
         }
-
 
         function preencherFiltroSituacao(dados) {
             if (dados.length === 0) return;
@@ -229,17 +200,14 @@
             const statusSelecionado = statusFilter.value;
 
             const dadosFiltrados = dadosCompletos.filter(item => {
-                // Filtro Texto
                 const matchTexto = Object.values(item).some(val => String(val).toLowerCase().includes(termoTexto));
                 
-                // Filtro Coluna (Dia Específico)
                 let matchColuna = true;
                 if (diaSelecionado !== "" && diaSelecionado !== "TODOS_ANO") {
                     const valorNaCélula = item[diaSelecionado];
                     matchColuna = valorNaCélula && valorNaCélula.trim() !== "";
                 }
 
-                // Filtro Situação
                 let matchSituacao = true;
                 if (statusSelecionado !== "") {
                     matchSituacao = item[COLUNA_SITUACAO] === statusSelecionado;
@@ -248,7 +216,6 @@
                 return matchTexto && matchColuna && matchSituacao;
             });
             
-            // Enviamos para a tabela saber o que mostrar
             gerarTabela(dadosFiltrados, diaSelecionado, anoSelecionado, termoTexto);
         }
 
@@ -268,7 +235,7 @@
             return texto.replace(/\*(.*?)\*/g, '<b style="color: #b71c1c; font-weight: 900;">$1</b>');
         }
 
-        // --- GERADOR DE TABELA ATUALIZADO ---
+        // --- GERADOR DE TABELA CORRIGIDO ---
         function gerarTabela(dados, diaSelecionado, anoSelecionado, termoBusca) {
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
@@ -280,36 +247,50 @@
 
             const todasColunas = Object.keys(dados[0]);
             const colunasParaMostrar = [];
-
             const thNum = document.createElement("th");
             thNum.textContent = "#";
             tableHeader.appendChild(thNum);
 
+            // AQUI ESTÁ A LÓGICA CORRIGIDA
             todasColunas.forEach(col => {
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
 
-                // SE NÃO TEM ANO OU DIA SELECIONADO -> Esconde datas, mostra infos básicas
+                // REGRA 1: SE TEM BUSCA POR NOME, É PRIORIDADE MÁXIMA
+                // Mostra todas as datas onde aquele militar tem serviço/falta
+                if (termoBusca !== "" && termoBusca.length > 0) {
+                    if (!ehData) {
+                        // Mostra dados básicos (Nome, Posto...) exceto unidades extras
+                        if (!ehUnidadeExtra) colunasParaMostrar.push(col);
+                    } else {
+                        // Se for data, verifica se tem valor pra algum dos militares filtrados
+                        const temServicoNesseDia = dados.some(militar => militar[col] && militar[col].trim() !== "");
+                        if (temServicoNesseDia) colunasParaMostrar.push(col);
+                    }
+                    return; // Passa pra próxima coluna, ignorando o resto das regras abaixo
+                }
+
+                // REGRA 2: LÓGICA NORMAL DE FILTROS (Sem busca por nome)
+                
+                // Se não selecionou Ano nem Dia -> Esconde datas
                 if (anoSelecionado === "" || diaSelecionado === "") {
                     if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
                     return;
                 }
 
-                // SE ESCOLHEU "VER TODOS DO ANO"
+                // Se "Ver Todos do Ano" -> Mostra dados do ano
                 if (diaSelecionado === "TODOS_ANO") {
-                    // Mostra infos básicas
                     if (!ehData && !ehUnidadeExtra) {
                         colunasParaMostrar.push(col);
                         return;
                     }
-                    // E mostra datas que sejam daquele ano
                     if (ehData && col.includes(anoSelecionado)) {
                         colunasParaMostrar.push(col);
                     }
                     return;
                 }
 
-                // SE ESCOLHEU UM DIA ESPECÍFICO
+                // Se dia específico -> Mostra só aquele dia
                 if (col === diaSelecionado) colunasParaMostrar.push(col);
                 else if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
             });
@@ -322,7 +303,6 @@
 
             dados.forEach((linha, index) => {
                 const tr = document.createElement("tr");
-
                 const tdNum = document.createElement("td");
                 tdNum.textContent = index + 1;
                 tr.appendChild(tdNum);
@@ -341,7 +321,6 @@
                     } else {
                         td.innerHTML = formatarNomeGuerra(valorOriginal);
                     }
-
                     tr.appendChild(td);
                 });
                 tableBody.appendChild(tr);
@@ -350,10 +329,8 @@
 
         searchInput.addEventListener("keyup", aplicarFiltros);
         statusFilter.addEventListener("change", aplicarFiltros); 
-        
-        // Listeners Especiais para Ano/Dia
-        yearFilter.addEventListener("change", atualizarListaDias); // Mudou ano -> Atualiza lista de dias
-        columnFilter.addEventListener("change", aplicarFiltros);   // Mudou dia -> Aplica filtro na tabela
+        yearFilter.addEventListener("change", atualizarListaDias); 
+        columnFilter.addEventListener("change", aplicarFiltros);   
 
         carregarDados();
     </script>
