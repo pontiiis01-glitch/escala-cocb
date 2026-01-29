@@ -27,26 +27,50 @@
         @media (max-width: 700px) { header { flex-direction: column; gap: 15px; } }
 
         /* --- CONTROLES --- */
-        .controls { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        
+        .controls { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .search-box { flex: 2; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; transition: all 0.3s; min-width: 200px; }
-        
-        .filter-select { 
-            flex: 1; 
-            padding: 12px 15px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 6px; 
-            font-size: 1rem; 
-            background-color: white; 
-            cursor: pointer; 
-            min-width: 160px; 
-            font-weight: 600; 
-            color: #b71c1c; 
-        }
-
+        .filter-select { flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1rem; background-color: white; cursor: pointer; min-width: 160px; font-weight: 600; color: #b71c1c; }
         .search-box:focus, .filter-select:focus { border-color: #d32f2f; outline: none; box-shadow: 0 0 5px rgba(211, 47, 47, 0.3); }
         #loading { color: #c0392b; font-weight: 700; display: none; font-size: 0.9rem; }
 
+        /* --- NOVO: PLACAR DE ESTATÍSTICAS --- */
+        #statsPanel {
+            display: none; /* Começa escondido */
+            margin-bottom: 20px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #b71c1c;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            animation: fadeIn 0.5s;
+        }
+
+        .stats-grid {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background-color: #ffebee;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 100px;
+            border: 1px solid #ffcdd2;
+        }
+
+        .stat-number { font-size: 1.5rem; font-weight: 800; color: #b71c1c; display: block; }
+        .stat-label { font-size: 0.85rem; color: #555; font-weight: 600; text-transform: uppercase; }
+        
+        .stat-card.total { background-color: #b71c1c; color: white; border: none; }
+        .stat-card.total .stat-number { color: white; }
+        .stat-card.total .stat-label { color: #ffcdd2; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- TABELA --- */
         .table-container { overflow-x: auto; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); background-color: #fff; border-radius: 8px; height: 65vh; overflow-y: auto; border: 1px solid #ffcdd2; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ffebee; font-size: 0.9rem; }
@@ -85,6 +109,11 @@
         <span id="loading">🚒 Carregando...</span>
     </div>
 
+    <div id="statsPanel">
+        <div class="stats-grid" id="statsContent">
+            </div>
+    </div>
+
     <div class="table-container">
         <table id="militaresTable">
             <thead><tr id="tableHeader"></tr></thead>
@@ -105,6 +134,8 @@
         const statusFilter = document.getElementById("statusFilter");
         const yearFilter = document.getElementById("yearFilter");
         const columnFilter = document.getElementById("columnFilter");
+        const statsPanel = document.getElementById("statsPanel");
+        const statsContent = document.getElementById("statsContent");
         
         let dadosCompletos = [];
         let colunasDeData = []; 
@@ -118,7 +149,7 @@
                     colunasDeData = Object.keys(dadosCompletos[0]).filter(col => col.includes("/") && /[0-9]/.test(col));
                     preencherFiltroSituacao(dadosCompletos);
                     preencherFiltroAnos(); 
-                    gerarTabela(dadosCompletos, "", "", ""); // Inicia limpo
+                    gerarTabela(dadosCompletos, "", "", ""); 
                     loadingMsg.style.display = "none";
                 },
                 error: function(err) { console.error(err); loadingMsg.innerHTML = "❌ Erro."; }
@@ -216,7 +247,62 @@
                 return matchTexto && matchColuna && matchSituacao;
             });
             
+            // ATUALIZA O PLACAR COM OS DADOS FILTRADOS
+            calcularEstatisticas(dadosFiltrados);
+
             gerarTabela(dadosFiltrados, diaSelecionado, anoSelecionado, termoTexto);
+        }
+
+        // --- NOVA FUNÇÃO: CALCULA SERVIÇOS TOTAIS E POR ANO ---
+        function calcularEstatisticas(dados) {
+            // Se não tiver dados ou estiver mostrando muita gente (>10), esconde o placar
+            if (dados.length === 0 || dados.length > 20) {
+                statsPanel.style.display = "none";
+                return;
+            }
+
+            statsPanel.style.display = "block";
+            let totalGeral = 0;
+            let servicosPorAno = {}; // Objeto para guardar { "2025": 10, "2026": 5 }
+
+            // Percorre cada militar filtrado
+            dados.forEach(militar => {
+                // Percorre TODAS as colunas de data (independente do filtro visual)
+                colunasDeData.forEach(colData => {
+                    const valor = militar[colData];
+                    // Se tiver algo escrito na célula (não for vazio)
+                    if (valor && valor.trim() !== "") {
+                        totalGeral++;
+                        
+                        // Descobre o ano dessa coluna
+                        const matchAno = colData.match(/\d{4}/);
+                        const ano = matchAno ? matchAno[0] : "Outros";
+
+                        if (!servicosPorAno[ano]) servicosPorAno[ano] = 0;
+                        servicosPorAno[ano]++;
+                    }
+                });
+            });
+
+            // GERA O HTML DOS CARDS
+            let html = `
+                <div class="stat-card total">
+                    <span class="stat-number">${totalGeral}</span>
+                    <span class="stat-label">Total Geral</span>
+                </div>
+            `;
+
+            // Ordena os anos para exibir bonito (2025, 2026...)
+            Object.keys(servicosPorAno).sort().forEach(ano => {
+                html += `
+                    <div class="stat-card">
+                        <span class="stat-number">${servicosPorAno[ano]}</span>
+                        <span class="stat-label">Ano ${ano}</span>
+                    </div>
+                `;
+            });
+
+            statsContent.innerHTML = html;
         }
 
         function obterCorPorTexto(texto) {
@@ -235,7 +321,6 @@
             return texto.replace(/\*(.*?)\*/g, '<b style="color: #b71c1c; font-weight: 900;">$1</b>');
         }
 
-        // --- GERADOR DE TABELA CORRIGIDO ---
         function gerarTabela(dados, diaSelecionado, anoSelecionado, termoBusca) {
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
@@ -251,34 +336,36 @@
             thNum.textContent = "#";
             tableHeader.appendChild(thNum);
 
-            // AQUI ESTÁ A LÓGICA CORRIGIDA
             todasColunas.forEach(col => {
                 const ehData = col.includes("/") && /[0-9]/.test(col);
                 const ehUnidadeExtra = col.toLowerCase().includes("secundária") || col.toLowerCase().includes("terciária");
 
-                // REGRA 1: SE TEM BUSCA POR NOME, É PRIORIDADE MÁXIMA
-                // Mostra todas as datas onde aquele militar tem serviço/falta
+                // REGRA 1: BUSCA POR NOME
+                // Se o usuário selecionou UM ANO, respeita o ano mesmo na busca
+                // Se NÃO selecionou ano, aí mostra tudo.
                 if (termoBusca !== "" && termoBusca.length > 0) {
+                    
+                    // Se o usuário está filtrando por ano (ex: 2025), mostra só as datas de 2025
+                    if (anoSelecionado !== "") {
+                        if (ehData && !col.includes(anoSelecionado)) return; // Pula anos errados
+                    }
+
                     if (!ehData) {
-                        // Mostra dados básicos (Nome, Posto...) exceto unidades extras
                         if (!ehUnidadeExtra) colunasParaMostrar.push(col);
                     } else {
-                        // Se for data, verifica se tem valor pra algum dos militares filtrados
+                        // Mostra a data se tiver serviço
                         const temServicoNesseDia = dados.some(militar => militar[col] && militar[col].trim() !== "");
                         if (temServicoNesseDia) colunasParaMostrar.push(col);
                     }
-                    return; // Passa pra próxima coluna, ignorando o resto das regras abaixo
+                    return; 
                 }
 
-                // REGRA 2: LÓGICA NORMAL DE FILTROS (Sem busca por nome)
-                
-                // Se não selecionou Ano nem Dia -> Esconde datas
+                // REGRA 2: SEM BUSCA POR NOME (Comportamento Padrão)
                 if (anoSelecionado === "" || diaSelecionado === "") {
                     if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
                     return;
                 }
 
-                // Se "Ver Todos do Ano" -> Mostra dados do ano
                 if (diaSelecionado === "TODOS_ANO") {
                     if (!ehData && !ehUnidadeExtra) {
                         colunasParaMostrar.push(col);
@@ -290,7 +377,6 @@
                     return;
                 }
 
-                // Se dia específico -> Mostra só aquele dia
                 if (col === diaSelecionado) colunasParaMostrar.push(col);
                 else if (!ehData && !ehUnidadeExtra) colunasParaMostrar.push(col);
             });
